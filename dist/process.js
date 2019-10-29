@@ -12,24 +12,29 @@ const util_1 = require("./util");
 const metadata_1 = require("./metadata");
 const fs_extra_1 = require("fs-extra");
 async function processFile(file, params) {
-    const metadata = await metadata_1.getMetadata(file);
-    const generatePathResult = await generatePath(file, params, metadata);
-    if (generatePathResult.is_err()) {
-        return monads_1.Err(generatePathResult.unwrap_err());
-    }
-    const generatedPath = generatePathResult.unwrap();
-    if (generatedPath.isDuplicate) {
-        if (params.duplicates.is_some()) {
-            const dest = path_1.join(params.duplicates.unwrap(), generatedPath.directoryStructure, generatedPath.fileName);
-            return await transferFile(file, dest, params);
+    try {
+        const metadata = await metadata_1.getMetadata(file);
+        const generatePathResult = await generatePath(file, params, metadata);
+        if (generatePathResult.is_err()) {
+            return monads_1.Err(generatePathResult.unwrap_err());
+        }
+        const generatedPath = generatePathResult.unwrap();
+        if (generatedPath.isDuplicate) {
+            if (params.duplicates.is_some()) {
+                const dest = path_1.join(params.duplicates.unwrap(), generatedPath.directoryStructure, generatedPath.fileName);
+                return await transferFile(file, dest, params);
+            }
+            else {
+                return monads_1.Err(new Error("Duplicate File"));
+            }
         }
         else {
-            return monads_1.Err(new Error("Duplicate File"));
+            const dest = path_1.join(params.destinationDirectory, generatedPath.directoryStructure, generatedPath.fileName);
+            return await transferFile(file, dest, params);
         }
     }
-    else {
-        const dest = path_1.join(params.destinationDirectory, generatedPath.directoryStructure, generatedPath.fileName);
-        return await transferFile(file, dest, params);
+    catch (e) {
+        return monads_1.Err(e);
     }
 }
 exports.processFile = processFile;
