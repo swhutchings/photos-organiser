@@ -52,19 +52,23 @@ const run = async (): Promise<void> => {
   Logger.info(`Found ${matches.length} matches`);
 
   // Create Evaluate EXIF/Rename/Move or Copy Pipeline
-  const queue = new PQueue({ concurrency: 16 });
+  const queue = new PQueue({ concurrency: 4 });
   await queue.addAll(
     matches.map(file => {
       return async () => {
-        const result = await processFile(file, params);
-        result.match({
-          ok: s => {
-            Logger.info(s);
-          },
-          err: e => {
-            Logger.error("File Processing Error", e);
-          }
-        });
+        try {
+          const result = await processFile(file, params);
+          result.match({
+            ok: s => {
+              Logger.info(s);
+            },
+            err: e => {
+              Logger.error("File Processing Error", e);
+            }
+          });
+        } catch (e) {
+          Logger.error("", e);
+        }
       };
     })
   );

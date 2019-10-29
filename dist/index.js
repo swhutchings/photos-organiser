@@ -43,18 +43,23 @@ const run = async () => {
     });
     logger_1.Logger.info(`Found ${matches.length} matches`);
     // Create Evaluate EXIF/Rename/Move or Copy Pipeline
-    const queue = new p_queue_1.default({ concurrency: 16 });
+    const queue = new p_queue_1.default({ concurrency: 4 });
     await queue.addAll(matches.map(file => {
         return async () => {
-            const result = await process_1.processFile(file, params);
-            result.match({
-                ok: s => {
-                    logger_1.Logger.info(s);
-                },
-                err: e => {
-                    logger_1.Logger.error("File Processing Error", e);
-                }
-            });
+            try {
+                const result = await process_1.processFile(file, params);
+                result.match({
+                    ok: s => {
+                        logger_1.Logger.info(s);
+                    },
+                    err: e => {
+                        logger_1.Logger.error("File Processing Error", e);
+                    }
+                });
+            }
+            catch (e) {
+                logger_1.Logger.error("", e);
+            }
         };
     }));
     logger_1.Logger.info("Sort Complete");
